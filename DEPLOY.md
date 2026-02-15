@@ -1,6 +1,6 @@
-# 🚀 Deployment Guide (Without Docker)
+# 🚀 Deployment Guide (Caddy)
 
-Deploy Stock Tracker on your own server with custom domain.
+Deploy Stock Tracker on your own server with Caddy (automatic HTTPS!).
 
 ---
 
@@ -8,7 +8,7 @@ Deploy Stock Tracker on your own server with custom domain.
 
 - Linux Server (Ubuntu/Debian recommended)
 - Python 3.11+
-- Domain pointing to server IP
+- Domain pointing to server IP (DNS A record)
 - SSH access
 
 ---
@@ -23,10 +23,14 @@ ssh user@your-server.com
 sudo apt update && sudo apt upgrade -y
 
 # Install Python 3.11
-sudo apt install python3.11 python3.11-venv python3-pip -y
+sudo apt install python3.11 python3.11-venv python3-pip git -y
 
-# Install Nginx (Reverse Proxy)
-sudo apt install nginx -y
+# Install Caddy (Automatic HTTPS!)
+sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+sudo apt update
+sudo apt install caddy
 ```
 
 ---
@@ -91,60 +95,61 @@ sudo systemctl status stock-tracker
 
 ---
 
-## 4️⃣ Nginx Reverse Proxy (HTTPS)
+## 4️⃣ Caddy Reverse Proxy (Automatic HTTPS!)
 
+**Create Caddy config:**
 ```bash
-# Create Nginx config
-sudo nano /etc/nginx/sites-available/stock-tracker
+sudo nano /etc/caddy/Caddyfile
 ```
 
-**Paste this:**
-```nginx
-server {
-    listen 80;
-    server_name your-domain.com;  # ← CHANGE THIS
-
-    location / {
-        proxy_pass http://127.0.0.1:8501;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        
-        # Streamlit WebSocket support
-        proxy_read_timeout 86400;
+**Replace entire file with:**
+```
+your-domain.com {
+    reverse_proxy localhost:8501 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
     }
 }
 ```
 
+**Replace `your-domain.com` with your actual domain!**
+
 ```bash
-# Enable site
-sudo ln -s /etc/nginx/sites-available/stock-tracker /etc/nginx/sites-enabled/
-
 # Test config
-sudo nginx -t
+sudo caddy validate --config /etc/caddy/Caddyfile
 
-# Restart Nginx
-sudo systemctl restart nginx
+# Restart Caddy
+sudo systemctl restart caddy
+
+# Check status
+sudo systemctl status caddy
 ```
+
+**That's it!** Caddy automatically:
+- ✅ Gets SSL certificate (Let's Encrypt)
+- ✅ Renews certificates
+- ✅ Redirects HTTP → HTTPS
+- ✅ Handles WebSocket (Streamlit needs it)
 
 ---
 
-## 5️⃣ SSL Certificate (Let's Encrypt)
+## 5️⃣ DNS Setup (Before accessing!)
 
-```bash
-# Install Certbot
-sudo apt install certbot python3-certbot-nginx -y
+**Important:** Make sure DNS is configured BEFORE starting Caddy!
 
-# Get SSL certificate
-sudo certbot --nginx -d your-domain.com
-
-# Auto-renewal test
-sudo certbot renew --dry-run
 ```
+Type: A
+Name: @ (or subdomain like "stocks")
+Value: YOUR_SERVER_IP
+TTL: 3600
+```
+
+Example for `stocks.yourdomain.com`:
+- A record: stocks → YOUR_SERVER_IP
+
+Caddy will automatically get SSL once DNS resolves!
 
 ---
 
@@ -211,19 +216,37 @@ source venv/bin/activate
 streamlit run app.py
 ```
 
-### 502 Bad Gateway?
+### Caddy errors?
 ```bash
-# Check if app is running
-sudo systemctl status stock-tracker
+# Check Caddy logs
+sudo journalctl -u caddy -f
 
-# Check Nginx config
-sudo nginx -t
+# Validate config
+sudo caddy validate --config /etc/caddy/Caddyfile
+
+# Check if DNS resolves
+dig your-domain.com
 ```
 
-### Permission issues?
+### SSL not working?
 ```bash
-# Fix permissions
-sudo chown -R www-data:www-data /opt/stock-tracker
+# Check DNS first! (must point to server IP)
+dig your-domain.com
+
+# Caddy logs
+sudo journalctl -u caddy -n 100
+
+# Manual certificate request (debug)
+sudo caddy trust
+```
+
+### 502 Bad Gateway?
+```bash
+# Check if Streamlit is running
+sudo systemctl status stock-tracker
+
+# Check port 8501
+curl http://localhost:8501
 ```
 
 ---
