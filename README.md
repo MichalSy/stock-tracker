@@ -2,6 +2,31 @@
 
 **MVP zur Erkennung von "Hot Money" - Wo fließt gerade Kapital hin?**
 
+![Status](https://img.shields.io/badge/Status-Phase%201%20MVP-yellow)
+![Python](https://img.shields.io/badge/Python-3.11+-blue)
+![License](https://img.shields.io/badge/License-MIT-green)
+
+---
+
+## 📱 Screenshots (Streamlit Dashboard)
+
+**Dark Theme Trading Dashboard** - Mobile responsive!
+
+```
+┌──────────────────────────────────────┐
+│  📊 Flow Radar                        │
+├──────────────────────────────────────┤
+│  🔥 TOP MOVERS                        │
+│  ├─ NVDA  +5.2%   Vol: 50M           │
+│  ├─ TSLA  -3.1%   Vol: 45M           │
+│  └─ AMD   +2.8%   Vol: 30M           │
+├──────────────────────────────────────┤
+│  🚀 TOP CRYPTO GAINERS (24h)          │
+│  ├─ PEPE  +25%   Vol: $500M          │
+│  └─ SOL   +12%   Vol: $2B            │
+└──────────────────────────────────────┘
+```
+
 ---
 
 ## 🎯 Projekt-Ziel
@@ -82,6 +107,8 @@ stock-tracker/
 | **Analysis** | pandas, numpy | Standard für Data |
 | **Visualization** | plotly, matplotlib | Interaktive Charts |
 | **Caching** | SQLite (local) | Kein externer DB nötig für MVP |
+| **Frontend (MVP)** | Streamlit | Schnelles Data Dashboard, Mobile-ready |
+| **Frontend (Future)** | React + TypeScript | Custom UI, Native Mobile Feel |
 
 ---
 
@@ -89,19 +116,23 @@ stock-tracker/
 
 ### Phase 1: MVP (Aktuell)
 - [x] Projekt-Setup & Repo
-- [ ] Stock Data Collector (yfinance)
-- [ ] Crypto Data Collector (ccxt)
-- [ ] Basic Heat Score Algorithm
-- [ ] CLI Output (Top 10 Listen)
-- [ ] Jupyter Notebook für Exploration
+- [x] Stock Data Collector (yfinance)
+- [x] Crypto Data Collector (CoinGecko)
+- [x] CLI Output (Top 10 Listen)
+- [x] Jupyter Notebook für Exploration
+- [x] **Streamlit Frontend** (Mobile-ready Dashboard)
+- [ ] Deploy auf eigener Domain
 
 ### Phase 2: Enhanced Analysis
 - [ ] Whale Alert Integration
 - [ ] Social Sentiment (Reddit API)
 - [ ] Historical Backtesting
-- [ ] Web Dashboard (Streamlit)
+- [ ] Heat Score Algorithm optimieren
+- [ ] **React Frontend Planung** (TypeScript Migration)
 
-### Phase 3: Automation
+### Phase 3: React Migration & Automation
+- [ ] **React + TypeScript Frontend** (Full Custom UI)
+- [ ] Native Mobile Optimization
 - [ ] Cronjob Scheduler
 - [ ] Push Notifications (Telegram/Signal)
 - [ ] Alert Thresholds konfigurierbar
@@ -112,6 +143,7 @@ stock-tracker/
 - [ ] Machine Learning Signals
 - [ ] Options Flow Data
 - [ ] Backtesting Framework
+- [ ] Mobile App (React Native optional)
 
 ---
 
@@ -123,11 +155,15 @@ python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 
-# Run Analysis
+# Option 1: Streamlit Frontend (Empfohlen)
+streamlit run app.py
+# → Öffne http://localhost:8501
+
+# Option 2: CLI
 python src/main.py --type stocks --limit 20
 python src/main.py --type crypto --limit 20
 
-# Start Jupyter für Exploration
+# Option 3: Jupyter für Exploration
 jupyter notebook notebooks/
 ```
 
@@ -158,6 +194,40 @@ jupyter notebook notebooks/
 - **Keine Finanzberatung!** Nur Datenanalyse & Signale.
 - MVP ist **manuell triggbar** (kein Auto-Refresh)
 - Push-Notifications kommen in Phase 3
+
+---
+
+## 🎨 Frontend Evolution (Plan)
+
+### Phase 1: Streamlit (Aktuell)
+- ✅ Schnelles MVP Dashboard
+- ✅ Mobile-responsive
+- ✅ Dark Theme
+- ✅ Plotly Charts
+- ⚠️ Limitierte Customization
+
+### Phase 3: React + TypeScript (Geplant)
+Warum migrieren?
+- 🎨 Volle Design-Kontrolle
+- 📱 Native Mobile App Feel
+- ⚡ Bessere Performance
+- 🔧 Komplexere Features möglich
+
+**Tech Stack (Phase 3):**
+```
+Frontend: React 18 + TypeScript + Vite
+Charts: Recharts / TradingView Lightweight
+State: Zustand / Jotai
+Styling: Tailwind CSS
+Mobile: PWA (Progressive Web App)
+Backend: FastAPI (Python) - bereits vorhandene Collectors nutzen
+```
+
+**Migration Path:**
+1. FastAPI Backend erstellen (endpoints für stocks/crypto)
+2. React Frontend bauen (API consumed)
+3. Streamlit deprecated
+4. Deploy React app
 
 ---
 
